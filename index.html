@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>商品批量上下架 · 操作手册与模板</title>
+<style>
+:root{
+  --paper:#fffaf5;
+  --paper-2:#ffffff;
+  --ink:#221c17;
+  --ink-2:#4a423b;
+  --muted:#8b7f74;
+  --line:#efe4d8;
+  --line-2:#f6ece3;
+  --orange:#e8590c;
+  --orange-2:#c2450a;
+  --orange-soft:#fff1e6;
+  --amber:#e8590c;
+  --amber-2:#c2450a;
+  --amber-soft:#fff1e6;
+  --display:"PingFang SC","Microsoft YaHei","Noto Sans SC","Hiragino Sans GB",system-ui,sans-serif;
+  --body:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,"Courier New",monospace;
+  --shadow:0 1px 2px rgba(90,70,50,.04),0 10px 26px -22px rgba(90,70,50,.35);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background-color:var(--paper);
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(232,89,12,.05), transparent 46%),
+    radial-gradient(circle at 92% 0%, rgba(232,89,12,.04), transparent 40%),
+    linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,0) 320px);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:15px;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+.grain{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.05'/></svg>");
+}
+.watermark{position:fixed;inset:0;z-index:0;pointer-events:none;background-repeat:repeat;background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczODAnIGhlaWdodD0nMjQwJz48dGV4dCB4PScwJyB5PScwJyB0cmFuc2Zvcm09J3RyYW5zbGF0ZSgzMCwxNjgpIHJvdGF0ZSgtMjQpJyBmb250LWZhbWlseT0ndWktbW9ub3NwYWNlLENvbnNvbGFzLG1vbm9zcGFjZScgZm9udC1zaXplPScxNicgbGV0dGVyLXNwYWNpbmc9JzInIGZpbGw9JyNlODU5MGMnIGZpbGwtb3BhY2l0eT0nMC4wNyc+cWlxdWFucXVhbjwvdGV4dD48L3N2Zz4=")}
+.wrap{position:relative;z-index:3;max-width:1180px;margin:0 auto;padding:0 28px 72px}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;gap:20px;
+  padding:12px 28px;
+  background:rgba(255,250,245,.9);
+  backdrop-filter:blur(10px) saturate(1.2);
+  border-bottom:1px solid var(--line);
+}
+.brand{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--orange-2);background:var(--orange-soft);border:1px solid #fadfca;
+  padding:5px 12px;border-radius:99px;display:flex;align-items:center;gap:8px;white-space:nowrap;
+}
+.brand .dot{width:7px;height:7px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 3px rgba(232,89,12,.18)}
+.meta{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--muted);white-space:nowrap}
+
+/* mini switch, appears after hero scrolls away */
+.mini{
+  display:flex;gap:4px;margin-left:auto;opacity:0;transform:translateY(-6px);
+  pointer-events:none;transition:opacity .3s ease,transform .3s ease;
+}
+.mini.is-on{opacity:1;transform:none;pointer-events:auto}
+.mini + .meta{margin-left:16px}
+.mini button{
+  appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.7);
+  font-family:var(--body);font-size:12.5px;font-weight:600;color:var(--muted);
+  padding:5px 12px;border-radius:6px;cursor:pointer;transition:all .2s ease;
+}
+.mini button.is-active{color:#fff;border-color:var(--ink);background:var(--ink)}
+.mini button.is-active[data-panel="online"]{background:var(--amber);border-color:var(--amber)}
+
+/* ---------- hero ---------- */
+.hero{padding:56px 0 34px;border-bottom:1px solid var(--line)}
+.hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:44px;align-items:end}
+.kicker{
+  font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:12px;
+}
+.kicker::before{content:"";width:34px;height:1px;background:var(--ink);opacity:.5}
+h1{
+  font-family:var(--display);font-weight:800;font-size:clamp(34px,5.2vw,62px);
+  line-height:1.06;letter-spacing:-.5px;margin:18px 0 0;
+}
+h1 .hl{color:var(--orange)}
+h1 .hl2{color:var(--amber)}
+.lede{margin:16px 0 0;color:var(--ink-2);max-width:560px;font-size:15px}
+.hero-strip{display:flex;flex-wrap:wrap;gap:9px;margin-top:22px}
+.pill{
+  font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  border:1px solid var(--line);background:rgba(255,255,255,.6);
+  padding:5px 11px;border-radius:99px;color:var(--ink-2);
+}
+.pill b{color:var(--ink);font-weight:600}
+
+/* ---------- big switch ---------- */
+.switch{display:flex;flex-direction:column;gap:12px;position:relative}
+.switch-head{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--muted);
+  display:flex;align-items:center;gap:10px;margin-bottom:2px;
+}
+.switch-head::after{content:"";flex:1;height:1px;background:var(--line)}
+.switch-btn{
+  appearance:none;cursor:pointer;text-align:left;position:relative;
+  display:flex;align-items:center;gap:16px;
+  background:rgba(255,255,255,.62);border:1px solid var(--line);border-radius:10px;
+  padding:18px 18px 18px 16px;box-shadow:var(--shadow);
+  transition:transform .26s cubic-bezier(.2,.75,.25,1),border-color .24s,box-shadow .26s,background .24s;
+}
+.switch-btn::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line);border-radius:10px 0 0 10px;
+  transition:background .24s;
+}
+.switch-btn:hover{transform:translateY(-2px);border-color:#f4d3bb}
+.sw-num{font-family:var(--mono);font-size:26px;line-height:1;color:#cdb695;transition:color .24s;min-width:38px}
+.sw-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.sw-body b{font-size:18px;font-weight:700;letter-spacing:.02em;color:var(--ink);line-height:1.3}
+.sw-body em{font-style:normal;font-size:11.5px;color:var(--muted);line-height:1.5;letter-spacing:.02em}
+.sw-arrow{font-family:var(--mono);font-size:15px;color:var(--line);transition:transform .26s ease,color .24s}
+.switch-btn:hover .sw-arrow{transform:translateX(4px);color:var(--ink-2)}
+.switch-btn.is-active{background:#fff;border-color:var(--orange)}
+.switch-btn.is-active::before{background:var(--orange)}
+.switch-btn.is-active .sw-num{color:var(--orange)}
+.switch-btn.is-active .sw-arrow{color:var(--orange)}
+.switch-btn[data-panel="online"].is-active{border-color:var(--amber)}
+.switch-btn[data-panel="online"].is-active::before{background:var(--amber)}
+.switch-btn[data-panel="online"].is-active .sw-num{color:var(--amber)}
+.switch-btn[data-panel="online"].is-active .sw-arrow{color:var(--amber)}
+.switch-btn:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
+
+/* ---------- panels ---------- */
+.panel{display:none;padding-top:44px}
+.panel.is-active{display:block;animation:rise .5s cubic-bezier(.2,.75,.25,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.panel-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.panel-head h2{font-family:var(--display);font-size:34px;margin:8px 0 0;letter-spacing:-.3px;font-weight:800}
+.panel-head .side{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted);text-align:right;line-height:1.9}
+.sec-title{
+  font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--muted);margin:42px 0 16px;display:flex;align-items:center;gap:12px;
+}
+.sec-title::after{content:"";flex:1;height:1px;background:var(--line-2)}
+
+/* ---------- rule cards ---------- */
+.rules{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.rules.single{grid-template-columns:1fr}
+.rule{
+  position:relative;background:var(--paper-2);border:1px solid var(--line);
+  border-radius:10px;padding:24px 22px 22px;box-shadow:var(--shadow);
+  overflow:hidden;transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease;
+}
+.rule:hover{transform:translateY(-3px);border-color:#f4d3bb;box-shadow:0 1px 0 rgba(36,25,15,.04),0 24px 40px -32px rgba(60,50,38,.42)}
+.rule::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--amber);border-radius:10px 0 0 10px}
+.rule.red::before{background:var(--orange)}
+.rule .num{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--muted);display:block;margin-bottom:14px}
+.rule h3{margin:0 0 10px;font-size:17px;line-height:1.45;font-weight:700;letter-spacing:.01em}
+.rule p{margin:0;color:var(--ink-2);font-size:13.5px;line-height:1.75}
+.rule .warn{color:var(--orange);font-weight:700}
+.rule .big{
+  font-family:var(--display);font-size:44px;line-height:1;color:var(--ink);letter-spacing:-1px;
+  display:flex;align-items:baseline;gap:8px;margin-bottom:12px;
+}
+.rule .big span{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:400}
+.rule .big.red{color:var(--orange)}
+.rule .big.sm{font-size:31px;letter-spacing:.02em;line-height:1.2}
+.snippet{
+  margin-top:14px;display:block;font-family:var(--mono);font-size:12.5px;line-height:1.9;
+  background:#fff;border:1px dashed var(--line);border-radius:6px;padding:8px 12px;color:var(--ink);
+  letter-spacing:.04em;
+}
+.snippet em{font-style:normal;color:var(--muted);font-size:11px;letter-spacing:.1em;display:block;margin-bottom:2px}
+
+/* ---------- reasons ---------- */
+.reasons{margin-top:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:24px 26px;box-shadow:var(--shadow)}
+.rlist h4{
+  margin:0 0 10px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;
+}
+.rlist h4 + .chips{margin-bottom:22px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  appearance:none;cursor:pointer;font-family:var(--body);font-size:13px;
+  background:#fffaf5;border:1px solid var(--line);border-radius:99px;padding:7px 14px;
+  color:var(--ink-2);transition:all .2s ease;display:inline-flex;align-items:center;gap:8px;
+}
+.chip:hover{border-color:var(--orange);color:var(--ink);transform:translateY(-1px);box-shadow:0 8px 18px -14px rgba(0,0,0,.6)}
+.chip:active{transform:translateY(0)}
+.chip::after{content:"⧉";font-size:11px;color:var(--muted);opacity:.55}
+.chip:hover::after{color:var(--orange);opacity:1}
+.chip.green:hover{border-color:var(--amber)}
+.chip.green:hover::after{color:var(--amber)}
+.rlist .note{font-size:12.5px;color:var(--muted);margin:0;line-height:1.7;border-left:2px solid var(--line);padding-left:12px}
+
+/* ---------- template cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:18px}
+.card{
+  display:flex;flex-direction:column;background:var(--paper-2);
+  border:1px solid var(--line);border-radius:10px;padding:22px;
+  box-shadow:var(--shadow);position:relative;
+  transition:transform .32s cubic-bezier(.2,.75,.25,1),border-color .3s,box-shadow .3s;
+}
+.card:hover{transform:translateY(-4px);border-color:#f4d3bb;box-shadow:0 1px 0 rgba(36,25,15,.04),0 28px 44px -34px rgba(60,50,38,.46)}
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+.code{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted)}
+.badge{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;padding:3px 9px;border-radius:99px;background:var(--orange-soft);color:var(--orange-2)}
+.card.red .badge{background:var(--orange-soft);color:var(--orange-2)}
+.card.green .badge{background:var(--amber-soft);color:var(--amber-2)}
+.card h3{margin:0 0 6px;font-size:18px;font-weight:700;letter-spacing:.01em}
+.card .sub{margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.65}
+table.fields{width:100%;border-collapse:collapse;margin:0 0 18px;font-family:var(--mono);font-size:11.5px;table-layout:fixed}
+table.fields th{
+  text-align:left;font-weight:500;color:var(--ink);letter-spacing:.04em;
+  background:#fff5ec;padding:7px 7px;border:1px solid var(--line-2);
+  white-space:normal;line-height:1.35;font-size:11px;
+}
+table.fields td{padding:7px 7px;border:1px solid var(--line-2);color:var(--muted);background:#fff;overflow-wrap:anywhere;line-height:1.5}
+table.fields th:last-child,table.fields td:last-child{width:34%}
+.dl{
+  margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  text-decoration:none;border-top:1px solid var(--line);padding-top:14px;
+  font-size:13.5px;font-weight:600;color:var(--ink);transition:color .22s ease;
+}
+.dl span{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);font-family:var(--mono);font-size:13px;transition:all .25s ease}
+.card:hover .dl span{background:var(--ink);color:var(--paper-2);border-color:var(--ink);transform:translateY(2px)}
+.card.red .dl:hover{color:var(--orange)}
+.card.green .dl:hover{color:var(--amber)}
+.card.red:hover .dl span{background:var(--orange);border-color:var(--orange);color:#fff}
+.card.green:hover .dl span{background:var(--amber);border-color:var(--amber);color:#fff}
+
+/* ---------- critical banner ---------- */
+.critical{
+  display:grid;grid-template-columns:76px 1fr;gap:24px;
+  background:linear-gradient(135deg,#ffffff 0%,#fff6ef 100%);
+  border:1px solid var(--line);border-left:4px solid var(--amber);
+  border-radius:10px;padding:28px 28px 26px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.critical::after{
+  content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(232,89,12,.10),transparent 70%);
+}
+.critical .mark{font-family:var(--display);font-size:56px;line-height:1;color:var(--amber);opacity:.85}
+.critical h3{margin:0 0 10px;font-family:var(--display);font-size:23px;line-height:1.5;letter-spacing:-.2px;font-weight:800}
+.critical h3 em{font-style:normal;color:var(--amber);font-weight:700;border-bottom:2px solid rgba(232,89,12,.35)}
+.critical p{margin:0;color:var(--ink-2);font-size:13.8px}
+.critical .path{
+  display:inline-flex;align-items:center;gap:8px;margin-top:14px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:6px;color:var(--ink);
+}
+.critical .path b{color:var(--amber)}
+
+/* ---------- tips ---------- */
+.tips{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:16px}
+.tip{background:rgba(255,255,255,.78);border:1px solid var(--line-2);border-radius:10px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start}
+.tip .ico{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:#fff;color:var(--amber)}
+.tip h4{margin:0 0 5px;font-size:14px;font-weight:700}
+.tip p{margin:0;font-size:12.8px;color:var(--muted);line-height:1.7}
+
+/* ---------- footer ---------- */
+footer{
+  margin-top:62px;padding-top:22px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--muted);
+}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:34px;transform:translate(-50%,16px);
+  background:var(--ink);color:#fffaf5;font-size:13px;letter-spacing:.02em;
+  padding:10px 18px;border-radius:6px;opacity:0;pointer-events:none;z-index:60;
+  transition:opacity .25s ease,transform .25s ease;box-shadow:0 20px 40px -22px rgba(0,0,0,.7);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- responsive ---------- */
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr;gap:28px;align-items:start}
+  .switch{max-width:520px}
+}
+@media (max-width:820px){
+  .rules{grid-template-columns:1fr}
+  .critical{grid-template-columns:1fr;gap:12px}
+  .critical .mark{font-size:40px}
+  .tips{grid-template-columns:1fr}
+  .topbar{padding:12px 18px}
+  .wrap{padding:0 18px 56px}
+  .hero{padding:40px 0 26px}
+  .meta{display:none}
+}
+@media (max-width:520px){
+  .panel-head h2{font-size:26px}
+  .sw-body b{font-size:16px}
+  .sw-num{font-size:22px;min-width:32px}
+  .switch-btn{padding:15px 14px}
+}
+</style>
+</head>
+<body>
+<div class="watermark" id="watermark" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand"><span class="dot"></span>OPS · 商品批量操作</div>
+  <div class="mini" id="mini">
+    <button type="button" data-panel="offline" class="is-active">01 下架</button>
+    <button type="button" data-panel="online">02 上架</button>
+  </div>
+  <div class="meta">SKC / SKU 批量导入</div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero" id="hero">
+    <div class="hero-grid">
+      <div class="hero-main">
+        <div class="kicker">批量上下架 · 执行前置检查</div>
+        <h1>下架 / 上架<br><span class="hl">模板</span>与<span class="hl2">注意事项</span></h1>
+        <p class="lede">按 SKC / SKU 维度批量执行商品下架与上架。提交前请逐项确认下方规则——尤其注意单表行数上限、下架原因的下拉取值、备注必填，以及多站点的填写格式。</p>
+        <div class="hero-strip">
+          <span class="pill">单表上限 <b>下架 2000</b> · <b>上架 1000</b> 条</span>
+          <span class="pill">下架原因 <b>仅限下拉项</b></span>
+          <span class="pill">备注 <b>必填</b></span>
+          <span class="pill">多站点 <b>英文分号 ;</b></span>
+          <span class="pill">模板 <b>5</b> 份</span>
+        </div>
+      </div>
+
+      <aside class="switch" role="tablist" aria-label="模板类型切换">
+        <div class="switch-head">选择模板类型</div>
+        <button class="switch-btn is-active" type="button" role="tab" data-panel="offline" aria-selected="true" aria-controls="panel-offline">
+          <span class="sw-num">01</span>
+          <span class="sw-body"><b>下架模板</b><em>SKC · 指定站点 · SKU ｜ 3 份</em></span>
+          <span class="sw-arrow">→</span>
+        </button>
+        <button class="switch-btn" type="button" role="tab" data-panel="online" aria-selected="false" aria-controls="panel-online">
+          <span class="sw-num">02</span>
+          <span class="sw-body"><b>上架模板</b><em>SKC · SKU ｜ 2 份</em></span>
+          <span class="sw-arrow">→</span>
+        </button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= 下架 ================= -->
+  <section class="panel is-active" id="panel-offline" role="tabpanel">
+    <div class="panel-head">
+      <div>
+        <div class="kicker">Step 01 / 下架</div>
+        <h2>下架模板</h2>
+      </div>
+      <div class="side">3 份模板<br>SKC · 指定站点 · SKU</div>
+    </div>
+
+    <div class="sec-title">提交前必读 · 四条硬性要求</div>
+
+    <div class="rules">
+      <article class="rule">
+        <span class="num">RULE 01</span>
+        <div class="big">2000<span>条 / 表</span></div>
+        <h3>一个表格不超过 2000 条</h3>
+        <p>单个模板文件最多填写 <strong>2000</strong> 行数据，超出部分请拆分为多个表格分批导入，否则会导致导入失败。</p>
+      </article>
+
+      <article class="rule red">
+        <span class="num">RULE 02</span>
+        <div class="big red sm">只选下拉项</div>
+        <h3>下架原因只能选下拉框里的</h3>
+        <p>下架原因 <span class="warn">必须从下拉框中选择</span>，<span class="warn">不要自己填别的！！！</span>填写下拉框以外的内容将无法通过校验。</p>
+      </article>
+
+      <article class="rule">
+        <span class="num">RULE 03</span>
+        <div class="big sm">备注必填</div>
+        <h3>备注也需要填</h3>
+        <p>每一行的 <strong>备注</strong> 列都需要填写，不得留空。请简要说明下架背景，便于审核追溯。</p>
+      </article>
+
+      <article class="rule">
+        <span class="num">RULE 04</span>
+        <div class="big sm">英文分号隔开</div>
+        <h3>多站点用英文分号 <b>;</b> 分隔</h3>
+        <p>指定站点下架时，多个站点必须用<span class="warn">英文分号 ;</span> 隔开，且使用「xx站」写法填写。</p>
+        <span class="snippet"><em>正确示例</em>美国站;加拿大站</span>
+      </article>
+    </div>
+
+    <div class="sec-title">下架原因取值范围 · 仅限下拉项</div>
+
+    <div class="reasons">
+      <div class="rlist">
+        <h4>常规模板（SKC / SKU 下架）</h4>
+        <div class="chips" id="chipsCommon">
+          <button class="chip" type="button">卖家停产/无货</button>
+          <button class="chip" type="button">认证资质问题</button>
+          <button class="chip" type="button">申报价格无优势</button>
+          <button class="chip" type="button">节日品下架</button>
+          <button class="chip" type="button">换季品下架</button>
+          <button class="chip" type="button">其他</button>
+        </div>
+
+        <h4>指定站点模板（SKC 下架指定站点）</h4>
+        <div class="chips" id="chipsSite">
+          <button class="chip green" type="button">申报价格无优势</button>
+          <button class="chip green" type="button">仓库库存原因</button>
+          <button class="chip green" type="button">物流运输问题</button>
+          <button class="chip green" type="button">其他</button>
+        </div>
+
+        <p class="note">两套模板的下拉选项不同，请按所使用的模板选择对应取值；点击选项可复制。</p>
+      </div>
+    </div>
+
+    <div class="sec-title">模板下载</div>
+
+    <div class="cards">
+      <article class="card red">
+        <div class="card-top"><span class="code">T-01</span><span class="badge">3 列</span></div>
+        <h3>SKC 下架模板</h3>
+        <p class="sub">按 SKC 维度整体下架，需填写下架原因与备注。</p>
+        <table class="fields">
+          <thead><tr><th>货品SKC</th><th>下架原因</th><th>备注</th></tr></thead>
+          <tbody><tr><td>11111111111</td><td>卖家停产/无货</td><td>停止供货</td></tr></tbody>
+        </table>
+        <a class="dl" href="elements/tpl-skc-offline.xlsx" download="SKC下架模板.xlsx">下载模板 <span>↓</span></a>
+      </article>
+
+      <article class="card red">
+        <div class="card-top"><span class="code">T-02</span><span class="badge">4 列</span></div>
+        <h3>SKC 下架（指定站点）</h3>
+        <p class="sub">仅下架指定站点；多站点用英文分号隔开，写作 美国站;加拿大站。</p>
+        <table class="fields">
+          <thead><tr><th>货品SKC</th><th>站点id列表</th><th>下架原因</th><th>备注</th></tr></thead>
+          <tbody><tr><td>11111111111</td><td>美国站;加拿大站</td><td>物流运输问题</td><td>该站点时效超标</td></tr></tbody>
+        </table>
+        <a class="dl" href="elements/tpl-skc-offline-site.xlsx" download="SKC下架指定站点.xlsx">下载模板 <span>↓</span></a>
+      </article>
+
+      <article class="card red">
+        <div class="card-top"><span class="code">T-03</span><span class="badge">3 列</span></div>
+        <h3>SKU 下架模板</h3>
+        <p class="sub">按 SKU 维度精准下架，仅影响对应单品。</p>
+        <table class="fields">
+          <thead><tr><th>货品SKU</th><th>下架原因</th><th>备注</th></tr></thead>
+          <tbody><tr><td>11111111111</td><td>换季品下架</td><td>过季清仓</td></tr></tbody>
+        </table>
+        <a class="dl" href="elements/tpl-sku-offline.xlsx" download="SKU下架.xlsx">下载模板 <span>↓</span></a>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= 上架 ================= -->
+  <section class="panel" id="panel-online" role="tabpanel">
+    <div class="panel-head">
+      <div>
+        <div class="kicker">Step 02 / 上架</div>
+        <h2>上架模板</h2>
+      </div>
+      <div class="side">2 份模板<br>SKC · SKU</div>
+    </div>
+
+    <div class="sec-title">提交前必读 · 关键限制</div>
+
+    <div class="rules single">
+      <article class="rule">
+        <span class="num">RULE 01</span>
+        <div class="big">1000<span>条 / 表</span></div>
+        <h3>单个表格不超过 1000 条</h3>
+        <p>单个上架模板文件最多填写 <strong>1000</strong> 行数据，超出部分请拆分为多个表格分批导入，否则会导致导入失败。</p>
+      </article>
+    </div>
+
+    <div class="critical" style="margin-top:18px">
+      <div class="mark">!</div>
+      <div>
+        <h3>若为商家主动下架，只能在 <em>商家端 - 上新生命周期</em> 操作上架！</h3>
+        <p>商家自主操作下架的商品，无法通过批量上架模板恢复上架。请商家在商家端后台进入「上新生命周期」页面，找到对应商品并手动完成上架操作。</p>
+        <span class="path">商家端 → <b>上新生命周期</b> → 选择商品 → 上架</span>
+      </div>
+    </div>
+
+    <div class="tips">
+      <div class="tip">
+        <span class="ico">i</span>
+        <div>
+          <h4>备注列请一并填写</h4>
+          <p>上架模板保留「备注」列，请填写上架原因或说明，便于后续核对与追溯。</p>
+        </div>
+      </div>
+      <div class="tip">
+        <span class="ico">i</span>
+        <div>
+          <h4>按 SKC / SKU 选择模板</h4>
+          <p>整体恢复上架使用 SKC 模板，仅恢复单个规格使用 SKU 模板，两者不要混填在同一张表里。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title">模板下载</div>
+
+    <div class="cards">
+      <article class="card green">
+        <div class="card-top"><span class="code">T-04</span><span class="badge">2 列</span></div>
+        <h3>SKC 上架模板</h3>
+        <p class="sub">按 SKC 维度批量恢复上架，仅需 SKC 与备注。</p>
+        <table class="fields">
+          <thead><tr><th>货品SKC</th><th>备注</th></tr></thead>
+          <tbody><tr><td>11111111111</td><td>需要上架</td></tr></tbody>
+        </table>
+        <a class="dl" href="elements/tpl-skc-online.xlsx" download="SKC上架.xlsx">下载模板 <span>↓</span></a>
+      </article>
+
+      <article class="card green">
+        <div class="card-top"><span class="code">T-05</span><span class="badge">2 列</span></div>
+        <h3>SKU 上架模板</h3>
+        <p class="sub">按 SKU 维度批量恢复上架，仅需 SKU 与备注。</p>
+        <table class="fields">
+          <thead><tr><th>货品SKU</th><th>备注</th></tr></thead>
+          <tbody><tr><td>11111111111</td><td>需要上架</td></tr></tbody>
+        </table>
+        <a class="dl" href="elements/tpl-sku-online.xlsx" download="SKU上架.xlsx">下载模板 <span>↓</span></a>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    <span>商品批量上下架 · 操作手册</span>
+    <span>执行前请逐项确认以上提示</span>
+  </footer>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var WM_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczMzAnIGhlaWdodD0nMjE1Jz48dGV4dCB4PScwJyB5PScwJyB0cmFuc2Zvcm09J3RyYW5zbGF0ZSgzNCwxNTIpIHJvdGF0ZSgtMjQpJyBmb250LWZhbWlseT0nTWljcm9zb2Z0IFlhSGVpLFBpbmdGYW5nIFNDLHNhbnMtc2VyaWYnIGZvbnQtc2l6ZT0nMTQnIGxldHRlci1zcGFjaW5nPSczJyBmaWxsPScjYTgzNTEwJyBmaWxsLW9wYWNpdHk9JzAuMDg1Jz5URU1V5Y2K5omY566h5Y2w6Iqx57uEPC90ZXh0Pjwvc3ZnPg==";
+  var wm = document.getElementById('watermark');
+  if (wm) { wm.style.backgroundImage = 'url("' + WM_URL + '")'; }
+
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.switch-btn'));
+  var minis = Array.prototype.slice.call(document.querySelectorAll('.mini button'));
+  var miniBox = document.getElementById('mini');
+  var panels = {
+    offline: document.getElementById('panel-offline'),
+    online: document.getElementById('panel-online')
+  };
+
+  function activate(name) {
+    btns.forEach(function (b) {
+      var on = b.getAttribute('data-panel') === name;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    minis.forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-panel') === name);
+    });
+    Object.keys(panels).forEach(function (k) {
+      panels[k].classList.toggle('is-active', k === name);
+    });
+  }
+
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () { activate(b.getAttribute('data-panel')); });
+  });
+  minis.forEach(function (b) {
+    b.addEventListener('click', function () { activate(b.getAttribute('data-panel')); });
+  });
+
+  var hero = document.getElementById('hero');
+  if (hero && miniBox && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        miniBox.classList.toggle('is-on', !e.isIntersecting);
+      });
+    }, { threshold: 0, rootMargin: '-72px 0px 0px 0px' });
+    io.observe(hero);
+  }
+
+  var toast = document.getElementById('toast');
+  var toastTimer = null;
+
+  function showToast(msg) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add('show');
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(function () {
+      toast.classList.remove('show');
+    }, 1600);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showToast('已复制：' + text);
+      }).catch(function () {
+        showToast('复制失败，请手动选择文字');
+      });
+    } else {
+      showToast('已选择：' + text);
+    }
+  }
+
+  Array.prototype.slice.call(document.querySelectorAll('.chip')).forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      copyText(chip.textContent.trim());
+    });
+  });
+})();
+</script>
+</body>
+</html>
